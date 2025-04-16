@@ -3,11 +3,22 @@
 puts "Removing old packages and their price histories"
 Package.destroy_all
 
-puts "Creating new packages"
-
-Package.insert_all(
-  YAML.load_file(Rails.root.join("import/packages.yaml"))
+puts "Creating municipalities"
+Municipality.insert_all(
+  YAML.load_file(Rails.root.join("import/municipalities.yaml"))
 )
+
+puts "Creating new packages"
+packages_by_municipality = YAML.load_file(Rails.root.join("import/packages.yaml"))
+
+packages_by_municipality.each do |municipality_name, packages|
+  municipality = Municipality.find_by!(name: municipality_name)
+
+  Package.insert_all(
+    packages.map { |pkg_attrs| pkg_attrs.merge(municipality_id: municipality.id) }
+  )
+end
+
 
 premium = Package.find_by!(name: "premium")
 plus = Package.find_by!(name: "plus")
